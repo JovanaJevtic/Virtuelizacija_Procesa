@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Configuration;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Service
 {
@@ -17,6 +14,7 @@ namespace Service
             Console.WriteLine("SensorService is running...");
             Console.WriteLine("Press any key to stop.");
             Console.ReadKey();
+           
 
             host.Close();
             Console.WriteLine("SensorService stopped.");

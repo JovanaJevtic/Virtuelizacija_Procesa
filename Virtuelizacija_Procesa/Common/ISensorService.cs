@@ -1,10 +1,5 @@
 ﻿using Common.Faults;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Common
 {
@@ -19,7 +14,7 @@ namespace Common
         [OperationContract]
         [FaultContract(typeof(DataFormatFault))]
         [FaultContract(typeof(ValidationFault))]
-        string PushSample(SensorSample sample);
+        void PushSample(SensorSample sample);
 
         [OperationContract]
         [FaultContract(typeof(DataFormatFault))]

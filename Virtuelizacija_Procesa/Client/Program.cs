@@ -1,10 +1,8 @@
 ﻿using Common;
+using Common.Faults;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -17,25 +15,29 @@ namespace Client
 
             ISensorService proxy = factory.CreateChannel();
 
-         
+
             var meta = new SessionMeta
             {
                 SessionId = Guid.NewGuid().ToString(),
                 StartTime = DateTime.Now
             };
             Console.WriteLine(proxy.StartSession(meta));
-            //izmjeniti
-            var sample = new SensorSample
-            {
-                Volume = 42.5,
-                T_DHT = 24.3,
-                T_BMP = 23.9,
-                Pressure = 1013.25,
-                DateTime = DateTime.Now
-            };
-            Console.WriteLine(proxy.PushSample(sample));
 
-            Console.WriteLine(proxy.EndSession());
+            // učitavanje CSV fajla
+            CsvLoader loader = new CsvLoader();
+            var samples = loader.LoadCsv(out List<string> invalidRows, 100);
+
+            foreach (var sample in samples)
+            {
+                try
+                {
+                    proxy.PushSample(sample);
+                }
+                catch (FaultException<ValidationFault> ex)
+                {
+                    Console.WriteLine($"Validation error: {ex.Detail.Message} for sample at {sample.DateTime}");
+                }
+            }
 
             Console.ReadKey();
         }
