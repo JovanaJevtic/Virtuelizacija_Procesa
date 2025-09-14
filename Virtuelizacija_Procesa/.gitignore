@@ -9,6 +9,7 @@ Release/
 *.user
 *.userosscache
 *.sln.docstates
+*.slnLaunch.user
 
 .vs/
 

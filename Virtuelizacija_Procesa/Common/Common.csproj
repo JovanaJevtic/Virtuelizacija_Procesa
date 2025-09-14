@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Faults\DataFormatFault.cs" />
+    <Compile Include="Faults\ValidationFault.cs" />
     <Compile Include="ISensorService.cs" />
     <Compile Include="SensorSample.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
