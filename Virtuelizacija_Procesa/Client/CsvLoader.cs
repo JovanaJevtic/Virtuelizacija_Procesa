@@ -63,7 +63,11 @@ namespace Client
             if (invalidRows.Count > 0)
             {
                 string logPath = ConfigurationManager.AppSettings["LogPath"];
-                File.AppendAllLines(logPath, invalidRows);
+                using (StreamWriter logWriter = new StreamWriter(logPath, true))
+                {
+                    foreach (var invalid in invalidRows)
+                        logWriter.WriteLine(invalid);
+                }
             }
 
             Console.WriteLine($"Ukupno uspešno učitanih redova: {samples.Count}");
