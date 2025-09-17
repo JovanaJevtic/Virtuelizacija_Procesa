@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Common
 {
-   
+
     public class SessionFiles : IDisposable
     {
         public StreamWriter MeasurementsWriter { get; private set; }
@@ -28,8 +28,6 @@ namespace Common
             RejectsWriter.WriteLine("DateTime,Volume,T_DHT,T_BMP,Pressure,Reason");
             RejectsWriter.Flush();
         }
-
-     
         public void Dispose()
         {
             MeasurementsWriter?.Dispose();

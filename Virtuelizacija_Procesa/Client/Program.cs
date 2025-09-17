@@ -3,6 +3,7 @@ using Common.Faults;
 using System;
 using System.Collections.Generic;
 using System.ServiceModel;
+using System.Threading;
 
 namespace Client
 {
@@ -42,6 +43,7 @@ namespace Client
                             try
                             {
                                 service.PushSample(sample);
+                                Thread.Sleep(100);
                             }
                             catch (FaultException<ValidationFault> ex)
                             {
