@@ -12,7 +12,6 @@ namespace Client
 {
     public class CsvLoader
     {
-
         public List<SensorSample> LoadCsv(out List<string> invalidRows, int maxRows = 100)
         {
             invalidRows = new List<string>();

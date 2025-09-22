@@ -27,6 +27,9 @@ namespace Service
         //test
         private bool testExceptionTriggered = false;
 
+        private double lastVolume = 0;
+
+
 
         public SensorService()
         {
@@ -124,28 +127,51 @@ namespace Service
                         warnings.Add($"T_BMP odstupa ±25% od proseka: {sample.T_BMP:F2} (avg={avgT_BMP:F2})");
                 }
 
+                // Detekcija naglog skoka/opažanja u odnosu na prethodni sample
+                if (sampleCount > 0)
+                {
+                    double deltaV = sample.Volume - lastVolume;
+                    if (Math.Abs(deltaV) > V_threshold)
+                    {
+                        string direction = deltaV > 0 ? "iznad očekivanog" : "ispod očekivanog";
+                        events.RaiseVolumeSpike($"ΔV={deltaV:F2} {direction}", sample, deltaV);
+                    }
+                }
+
+                // Provera OutOfBand za Volume
+                if (sampleCount > 0)
+                {
+                    if (sample.Volume < avgVolume * 0.75)
+                        events.RaiseOutOfBandWarning("Volume ispod očekivane vrednosti", sample, avgVolume);
+                    else if (sample.Volume > avgVolume * 1.25)
+                        events.RaiseOutOfBandWarning("Volume iznad očekivane vrednosti", sample, avgVolume);
+                }
+
+
                 // Ažuriranje proseka
                 sampleCount++;
                 avgVolume = (avgVolume * (sampleCount - 1) + sample.Volume) / sampleCount;
                 avgT_DHT = (avgT_DHT * (sampleCount - 1) + sample.T_DHT) / sampleCount;
                 avgT_BMP = (avgT_BMP * (sampleCount - 1) + sample.T_BMP) / sampleCount;
 
+                lastVolume = sample.Volume;
+
                 // Upis u CSV
                 sessionFiles.MeasurementsWriter.WriteLine(line);
                 sessionFiles.MeasurementsWriter.Flush();
 
                 // Podizanje događaja
-                events.RaiseSampleReceived(sample);
+                events.RaiseSampleReceived(sample); 
                 foreach (var w in warnings)
                     events.RaiseWarning(w, sample);
 
 
                 // Simulacija izuzetka za testiranje Dispose-a
-                if (sampleCount == 3 && !testExceptionTriggered)
-                {
-                    testExceptionTriggered = true;
-                    throw new Exception("Simulirani prekid prenosa! (TEST)");
-                }
+                //if (sampleCount == 3 && !testExceptionTriggered)
+                //{
+                //    testExceptionTriggered = true;
+                //    throw new Exception("Simulirani prekid prenosa! (TEST)");
+                //}
 
 
             }
@@ -156,6 +182,7 @@ namespace Service
                throw;
             }
         }
+
         public string EndSession()
         {
             if (transferStarted)

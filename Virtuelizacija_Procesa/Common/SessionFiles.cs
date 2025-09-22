@@ -62,7 +62,7 @@ namespace Common
             Dispose(true);
             GC.SuppressFinalize(this); // finalizer nije potreban ako je Dispose već pozvan
 
-            Console.WriteLine("SessionFiles.Dispose pozvan – fajlovi zatvoreni!");
+            //Console.WriteLine("SessionFiles.Dispose pozvan – fajlovi zatvoreni!");
         }
 
         ~SessionFiles()
