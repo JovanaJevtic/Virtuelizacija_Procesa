@@ -12,6 +12,10 @@ namespace Common
     public delegate void VolumeSpikeHandler(string message, SensorSample sample, double deltaV);
     public delegate void OutOfBandWarningHandler(string message, SensorSample sample, double avg);
 
+    // novi delegati za Analitiku 2
+    public delegate void TemperatureSpikeDHTHandler(string message, SensorSample sample, double deltaTdht);
+    public delegate void TemperatureSpikeBMPHandler(string message, SensorSample sample, double deltaTbmp);
+
     public class SensorEvents
     {
         //  Postojeći događaji
@@ -20,9 +24,14 @@ namespace Common
         public event TransferCompletedHandler OnTransferCompleted;
         public event WarningRaisedHandler OnWarningRaised;
 
-        //  Novi događaji 
+        //  novi događaji 
         public event VolumeSpikeHandler OnVolumeSpike;
         public event OutOfBandWarningHandler OnOutOfBandWarning;
+
+        //  novi događaji 
+        public event TemperatureSpikeDHTHandler OnTemperatureSpikeDHT;
+        public event TemperatureSpikeBMPHandler OnTemperatureSpikeBMP;
+
 
         //  Metode za podizanje događaja
         public void RaiseTransferStarted()
@@ -49,7 +58,7 @@ namespace Common
                 OnWarningRaised(message, sample);
         }
 
-
+        // analitika 1
         public void RaiseVolumeSpike(string message, SensorSample sample, double deltaV)
         {
             if (OnVolumeSpike != null)
@@ -60,6 +69,19 @@ namespace Common
         {
             if (OnOutOfBandWarning != null)
                 OnOutOfBandWarning(message, sample, avg);
+        }
+
+        // analitika 2
+        public void RaiseTemperatureSpikeDHT(string message, SensorSample sample, double deltaTdht)
+        {
+            if (OnTemperatureSpikeDHT != null)
+                OnTemperatureSpikeDHT(message, sample, deltaTdht);
+        }
+
+        public void RaiseTemperatureSpikeBMP(string message, SensorSample sample, double deltaTbmp)
+        {
+            if (OnTemperatureSpikeBMP != null)
+                OnTemperatureSpikeBMP(message, sample, deltaTbmp);
         }
     }
 }
