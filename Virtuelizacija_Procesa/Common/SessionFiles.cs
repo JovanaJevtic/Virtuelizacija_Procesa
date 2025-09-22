@@ -12,6 +12,8 @@ namespace Common
         public string MeasurementsFilePath { get; private set; }
         public string RejectsFilePath { get; private set; }
 
+        private bool disposed = false; // flag da ne bi dvaput Dispose
+
         public SessionFiles(string measurementsFilePath, string rejectsFilePath)
         {
             MeasurementsFilePath = measurementsFilePath;
@@ -28,13 +30,44 @@ namespace Common
             RejectsWriter.WriteLine("DateTime,Volume,T_DHT,T_BMP,Pressure,Reason");
             RejectsWriter.Flush();
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // Oslobađanje managed resursa
+                    MeasurementsWriter?.Dispose();
+                    RejectsWriter?.Dispose();
+                }
+
+                MeasurementsWriter = null;
+                RejectsWriter = null;
+
+                disposed = true;
+            }
+        }
+        //public void Dispose()
+        //{
+        //    MeasurementsWriter?.Dispose();
+        //    MeasurementsWriter = null;
+
+        //    RejectsWriter?.Dispose();
+        //    RejectsWriter = null;
+        //}
+
         public void Dispose()
         {
-            MeasurementsWriter?.Dispose();
-            MeasurementsWriter = null;
+            Dispose(true);
+            GC.SuppressFinalize(this); // finalizer nije potreban ako je Dispose već pozvan
 
-            RejectsWriter?.Dispose();
-            RejectsWriter = null;
+            Console.WriteLine("SessionFiles.Dispose pozvan – fajlovi zatvoreni!");
+        }
+
+        ~SessionFiles()
+        {
+            Dispose(false);
         }
     }
 }

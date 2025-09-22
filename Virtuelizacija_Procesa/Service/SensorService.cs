@@ -24,6 +24,10 @@ namespace Service
 
         private readonly SensorEvents events = new SensorEvents();
 
+        //test
+        private bool testExceptionTriggered = false;
+
+
         public SensorService()
         {
             // Pretplate na događaje (logovanje na konzolu)
@@ -60,60 +64,97 @@ namespace Service
 
         public void PushSample(SensorSample sample)
         {
-             if (sample == null)
-                 throw new FaultException<DataFormatFault>(new DataFormatFault("SensorSample cannot be null."));
+            // provera validnosti podataka
+            if (sample == null)
+                throw new FaultException<DataFormatFault>(
+                    new DataFormatFault("Uzorak senzora (SensorSample) ne sme biti prazan."));
 
-             string line = $"{sample.DateTime},{sample.Volume},{sample.T_DHT},{sample.T_BMP},{sample.Pressure}";
+            if (sample.DateTime == default(DateTime))
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Datum i vreme (DateTime) su obavezni."));
 
-             try
-             {
-                 if (!transferStarted)
-                     transferStarted = true;
+            if (double.IsNaN(sample.Volume) || double.IsInfinity(sample.Volume))
+                throw new FaultException<DataFormatFault>(
+                    new DataFormatFault("Vrednost za Volume mora biti ispravan broj."));
 
-                 List<string> warnings = new List<string>();
+            if (double.IsNaN(sample.T_DHT) || double.IsInfinity(sample.T_DHT))
+                throw new FaultException<DataFormatFault>(
+                    new DataFormatFault("Vrednost za T_DHT mora biti ispravan broj."));
 
-                 // Pragovi
-                 if (sample.Volume > V_threshold)
-                     warnings.Add($"Volume iznad praga: {sample.Volume:F2}");
-                 if (sample.T_DHT > T_dht_threshold)
-                     warnings.Add($"T_DHT iznad praga: {sample.T_DHT:F2}");
-                 if (sample.T_BMP > T_bmp_threshold)
-                     warnings.Add($"T_BMP iznad praga: {sample.T_BMP:F2}");
+            if (double.IsNaN(sample.T_BMP) || double.IsInfinity(sample.T_BMP))
+                throw new FaultException<DataFormatFault>(
+                    new DataFormatFault("Vrednost za T_BMP mora biti ispravan broj."));
 
-                 // ±25% od proseka (ako postoji prethodni sample)
-                 if (sampleCount > 0)
-                 {
-                     if (sample.Volume < avgVolume * 0.75 || sample.Volume > avgVolume * 1.25)
-                         warnings.Add($"Volume odstupa ±25% od proseka: {sample.Volume:F2} (avg={avgVolume:F2})");
+            if (double.IsNaN(sample.Pressure) || double.IsInfinity(sample.Pressure))
+                throw new FaultException<DataFormatFault>(
+                    new DataFormatFault("Vrednost za Pressure mora biti ispravan broj."));
 
-                     if (sample.T_DHT < avgT_DHT * 0.75 || sample.T_DHT > avgT_DHT * 1.25)
-                         warnings.Add($"T_DHT odstupa ±25% od proseka: {sample.T_DHT:F2} (avg={avgT_DHT:F2})");
+            if (sample.Pressure <= 0)
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Pritisak (Pressure) mora biti veći od nule."));
+            /////
 
-                     if (sample.T_BMP < avgT_BMP * 0.75 || sample.T_BMP > avgT_BMP * 1.25)
-                         warnings.Add($"T_BMP odstupa ±25% od proseka: {sample.T_BMP:F2} (avg={avgT_BMP:F2})");
-                 }
+            string line = $"{sample.DateTime},{sample.Volume},{sample.T_DHT},{sample.T_BMP},{sample.Pressure}";
 
-                 // Ažuriranje proseka
-                 sampleCount++;
-                 avgVolume = (avgVolume * (sampleCount - 1) + sample.Volume) / sampleCount;
-                 avgT_DHT = (avgT_DHT * (sampleCount - 1) + sample.T_DHT) / sampleCount;
-                 avgT_BMP = (avgT_BMP * (sampleCount - 1) + sample.T_BMP) / sampleCount;
+            try
+            {
+                if (!transferStarted)
+                    transferStarted = true;
 
-                 // Upis u CSV
-                 sessionFiles.MeasurementsWriter.WriteLine(line);
-                 sessionFiles.MeasurementsWriter.Flush();
+                List<string> warnings = new List<string>();
 
-                 // Podizanje događaja
-                 events.RaiseSampleReceived(sample);
-                 foreach (var w in warnings)
-                     events.RaiseWarning(w, sample);
-             }
-             catch (Exception ex)
-             {
-                 sessionFiles.RejectsWriter.WriteLine(line + $",{ex.Message}");
-                 sessionFiles.RejectsWriter.Flush();
-                 throw;
-             }
+              // Pragovi
+                if (sample.Volume > V_threshold)
+                    warnings.Add($"Volume iznad praga: {sample.Volume:F2}");
+                if (sample.T_DHT > T_dht_threshold)
+                    warnings.Add($"T_DHT iznad praga: {sample.T_DHT:F2}");
+                if (sample.T_BMP > T_bmp_threshold)
+                    warnings.Add($"T_BMP iznad praga: {sample.T_BMP:F2}");
+
+                // ±25% od proseka (ako postoji prethodni sample)
+                if (sampleCount > 0)
+                {
+                    if (sample.Volume < avgVolume * 0.75 || sample.Volume > avgVolume * 1.25)
+                        warnings.Add($"Volume odstupa ±25% od proseka: {sample.Volume:F2} (avg={avgVolume:F2})");
+
+                    if (sample.T_DHT < avgT_DHT * 0.75 || sample.T_DHT > avgT_DHT * 1.25)
+                        warnings.Add($"T_DHT odstupa ±25% od proseka: {sample.T_DHT:F2} (avg={avgT_DHT:F2})");
+
+                    if (sample.T_BMP < avgT_BMP * 0.75 || sample.T_BMP > avgT_BMP * 1.25)
+                        warnings.Add($"T_BMP odstupa ±25% od proseka: {sample.T_BMP:F2} (avg={avgT_BMP:F2})");
+                }
+
+                // Ažuriranje proseka
+                sampleCount++;
+                avgVolume = (avgVolume * (sampleCount - 1) + sample.Volume) / sampleCount;
+                avgT_DHT = (avgT_DHT * (sampleCount - 1) + sample.T_DHT) / sampleCount;
+                avgT_BMP = (avgT_BMP * (sampleCount - 1) + sample.T_BMP) / sampleCount;
+
+                // Upis u CSV
+                sessionFiles.MeasurementsWriter.WriteLine(line);
+                sessionFiles.MeasurementsWriter.Flush();
+
+                // Podizanje događaja
+                events.RaiseSampleReceived(sample);
+                foreach (var w in warnings)
+                    events.RaiseWarning(w, sample);
+
+
+                // Simulacija izuzetka za testiranje Dispose-a
+                if (sampleCount == 3 && !testExceptionTriggered)
+                {
+                    testExceptionTriggered = true;
+                    throw new Exception("Simulirani prekid prenosa! (TEST)");
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + $",{ex.Message}");
+                sessionFiles.RejectsWriter.Flush();
+               throw;
+            }
         }
         public string EndSession()
         {
