@@ -24,9 +24,6 @@ namespace Service
 
         private readonly SensorEvents events = new SensorEvents();
 
-        //test
-        private bool testExceptionTriggered = false;
-
         // poslednje vrednosti za Δ izračunavanje
         private double lastVolume = 0;
         private double lastT_DHT = 0;
@@ -67,7 +64,7 @@ namespace Service
             sampleCount = 0;
 
             events.RaiseTransferStarted();
-            return "ACK: Session started";
+            return "Sesija zapoceta!";
         }
 
         public void PushSample(SensorSample sample)
@@ -100,7 +97,7 @@ namespace Service
             if (sample.Pressure <= 0)
                 throw new FaultException<ValidationFault>(
                     new ValidationFault("Pritisak (Pressure) mora biti veći od nule."));
-            /////
+         
 
             string line = $"{sample.DateTime},{sample.Volume},{sample.T_DHT},{sample.T_BMP},{sample.Pressure}";
 
@@ -193,6 +190,7 @@ namespace Service
                 events.RaiseSampleReceived(sample);
                 foreach (var w in warnings)
                     events.RaiseWarning(w, sample);
+                Console.WriteLine("-------------------------------------------------");
 
             }
             catch (Exception ex)
@@ -209,7 +207,7 @@ namespace Service
                 events.RaiseTransferCompleted();
 
             sessionFiles?.Dispose();
-            return "COMPLETED";
+            return "Sesija zavrsena!";
         }
     }
 }

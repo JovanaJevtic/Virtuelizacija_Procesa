@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Client
 {
-    internal class Program
+    public class Program
     {
         static void Main(string[] args)
         {
@@ -57,8 +57,8 @@ namespace Client
                     {
                         Console.WriteLine($"Greška prilikom rada sa servisom: {ex.Message}");
                     }
-                } // proxy.Dispose() automatski poziva Close()
-            } // factory.Dispose()
+                } 
+            } 
         }
     }
 }

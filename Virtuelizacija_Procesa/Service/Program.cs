@@ -10,11 +10,11 @@ namespace Service
         {
             ServiceHost host = new ServiceHost(typeof(SensorService));
             host.Open();
-            Console.WriteLine("SensorService is running...");
-            Console.WriteLine("Press any key to stop.");
+            Console.WriteLine("SensorService je pokrenut...");
+            Console.WriteLine("Pritisnite bilo koji taster za zaustavljanje.");
             Console.ReadKey();
+            Console.WriteLine("SensorService je zaustavljen.");
             host.Close();
-            Console.WriteLine("SensorService stopped.");
         }
     }
 }
