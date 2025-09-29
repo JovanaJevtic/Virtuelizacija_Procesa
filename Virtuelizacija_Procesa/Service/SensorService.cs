@@ -18,8 +18,8 @@ namespace Service
         private double avgT_BMP = 0;
         private int sampleCount = 0;
 
-        private readonly double T_dht_threshold = double.Parse(ConfigurationManager.AppSettings["T_dht_threshold"] ?? "50");
-        private readonly double T_bmp_threshold = double.Parse(ConfigurationManager.AppSettings["T_bmp_threshold"] ?? "50");
+        private readonly double T_dht_threshold = double.Parse(ConfigurationManager.AppSettings["T_dht_threshold"] ?? "25");
+        private readonly double T_bmp_threshold = double.Parse(ConfigurationManager.AppSettings["T_bmp_threshold"] ?? "25");
         private readonly double V_threshold = double.Parse(ConfigurationManager.AppSettings["V_threshold"] ?? "100");
 
         private readonly SensorEvents events = new SensorEvents();
@@ -69,38 +69,68 @@ namespace Service
 
         public void PushSample(SensorSample sample)
         {
+            string line = $"{sample.DateTime},{sample.Volume},{sample.T_DHT},{sample.T_BMP},{sample.Pressure}";
             // provera validnosti podataka
             if (sample == null)
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",SensorSample je null");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<DataFormatFault>(
-                    new DataFormatFault("Uzorak senzora (SensorSample) ne sme biti prazan."));
-
+                        new DataFormatFault("Uzorak senzora (SensorSample) ne sme biti prazan."));
+            }
             if (sample.DateTime == default(DateTime))
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",Datum i vreme (DateTime) su obavezni");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<ValidationFault>(
-                    new ValidationFault("Datum i vreme (DateTime) su obavezni."));
-
+                        new ValidationFault("Datum i vreme (DateTime) su obavezni."));
+            }
             if (double.IsNaN(sample.Volume) || double.IsInfinity(sample.Volume))
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",Volume nije ispravan broj");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<DataFormatFault>(
-                    new DataFormatFault("Vrednost za Volume mora biti ispravan broj."));
+                        new DataFormatFault("Vrednost za Volume mora biti ispravan broj."));
+            }
+            if (sample.Volume < 0)
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",Volume je negativan");
+                sessionFiles.RejectsWriter.Flush();
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Volume ne može biti negativan."));
+            }
 
             if (double.IsNaN(sample.T_DHT) || double.IsInfinity(sample.T_DHT))
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",T_DHT nije ispravan broj");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<DataFormatFault>(
                     new DataFormatFault("Vrednost za T_DHT mora biti ispravan broj."));
-
+            }
             if (double.IsNaN(sample.T_BMP) || double.IsInfinity(sample.T_BMP))
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",T_BMP nije ispravan broj");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<DataFormatFault>(
                     new DataFormatFault("Vrednost za T_BMP mora biti ispravan broj."));
+            }
 
             if (double.IsNaN(sample.Pressure) || double.IsInfinity(sample.Pressure))
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",Pressure nije validan ili <=0");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<DataFormatFault>(
                     new DataFormatFault("Vrednost za Pressure mora biti ispravan broj."));
+            }
 
             if (sample.Pressure <= 0)
+            {
+                sessionFiles.RejectsWriter.WriteLine(line + ",Pressure <= 0");
+                sessionFiles.RejectsWriter.Flush();
                 throw new FaultException<ValidationFault>(
                     new ValidationFault("Pritisak (Pressure) mora biti veći od nule."));
+            }
          
-
-            string line = $"{sample.DateTime},{sample.Volume},{sample.T_DHT},{sample.T_BMP},{sample.Pressure}";
-
             try
             {
                 if (!transferStarted)
